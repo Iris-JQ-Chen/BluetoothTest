@@ -36,7 +36,11 @@ public class Main2Activity extends AppCompatActivity implements View.OnClickList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
+        initView();
         SpeechUtility.createUtility(this, SpeechConstant.APPID +"=5d1d3d58");
+    }
+
+    private void initView(){
         findViewById(R.id.button_4).setOnClickListener(this);
     }
 
