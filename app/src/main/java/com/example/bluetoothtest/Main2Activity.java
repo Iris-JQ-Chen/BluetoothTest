@@ -73,6 +73,7 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
     private String choosed_device_address;
 
     private static final int REQUEST_RECORD_AUDIO = 101;
+    private String Result;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -247,10 +248,10 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
             }
             // 判断是否拿到输出流
             if (os != null) {
-                // 需要发送的信息
-                String text = "成功发送信息";
+//                // 需要发送的信息
+//                String text = "成功发送信息";
                 // 以utf-8的格式发送出去
-                os.write(text.getBytes("UTF-8"));
+                os.write(Result.getBytes("UTF-8"));
             }
             // 吐司一下，告诉用户发送成功
             Toast.makeText(this, "发送信息成功，请查收", Toast.LENGTH_SHORT).show();
@@ -281,8 +282,9 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
                 if (!isLast) {
                     //解析语音
                     //返回的result为识别后的汉字,直接赋值到TextView上即可
-                    String result = parseVoice(recognizerResult.getResultString());
-                    Toast.makeText(Main2Activity.this,result,Toast.LENGTH_SHORT).show();
+                    Result = parseVoice(recognizerResult.getResultString());
+                    Toast.makeText(Main2Activity.this,Result,Toast.LENGTH_SHORT).show();
+                    Send();
                 }
             }
 
@@ -310,7 +312,6 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
         }
         return sb.toString();
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
