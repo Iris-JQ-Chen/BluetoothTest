@@ -27,8 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class Main2Activity extends AppCompatActivity implements AdapterView.OnItemClickListener {
-
+public class Main2Activity extends AppCompatActivity implements AdapterView.OnItemClickListener, View.OnClickListener {
 
     // 获取到蓝牙适配器
     private BluetoothAdapter mBluetoothAdapter;
@@ -51,12 +50,20 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
     // 服务端利用线程不断接受客户端信息
     private AcceptThread thread;
 
+
+    private String choosed_device_info;
+    private String choosed_device_address;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
+        initView();
+        initBluetooth();
+    }
 
+    private void initView(){
         // 获取到蓝牙默认的适配器
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         // 获取到ListView组件
@@ -68,8 +75,10 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
         // 为listView设置item点击事件侦听
         lvDevices.setOnItemClickListener(this);
 
+        findViewById(R.id.button_5).setOnClickListener(this::onClick);
+    }
 
-
+    private void initBluetooth(){
         // 用Set集合保持已绑定的设备
         Set<BluetoothDevice> devices = mBluetoothAdapter.getBondedDevices();
         if (devices == null & devices.size() > 0) {
@@ -87,26 +96,21 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
         filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(receiver, filter);
 
-
         // 实例接收客户端传过来的数据线程
         thread = new AcceptThread();
         // 线程开始
         thread.start();
-
-
     }
-
 
     public void onClick_Search(View view) {
         setTitle("正在扫描...");
         // 点击搜索周边设备，如果正在搜索，则暂停搜索
+        arrayAdapter.clear();
         if (mBluetoothAdapter.isDiscovering()) {
             mBluetoothAdapter.cancelDiscovery();
         }
         mBluetoothAdapter.startDiscovery();
     }
-
-
 
     // 注册广播接收者
     private BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -137,9 +141,9 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         // 获取到这个设备的信息
-        String s = arrayAdapter.getItem(position);
+        choosed_device_info = arrayAdapter.getItem(position);
         // 对其进行分割，获取到这个设备的地址
-        String address = s.substring(s.indexOf(":") + 1).trim();
+        choosed_device_address = choosed_device_info.substring(choosed_device_info.indexOf(":") + 1).trim();
         // 判断当前是否还是正在搜索周边设备，如果是则暂停搜索
         if (mBluetoothAdapter.isDiscovering()) {
             mBluetoothAdapter.cancelDiscovery();
@@ -147,8 +151,59 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
         // 如果选择设备为空则代表还没有选择设备
         if (selectDevice == null) {
             //通过地址获取到该设备
-            selectDevice = mBluetoothAdapter.getRemoteDevice(address);
+            selectDevice = mBluetoothAdapter.getRemoteDevice(choosed_device_address);
         }
+//        // 这里需要try catch一下，以防异常抛出
+//        try {
+//            // 判断客户端接口是否为空
+//            if (clientSocket == null) {
+//                // 获取到客户端接口
+//                clientSocket = selectDevice.createRfcommSocketToServiceRecord(MY_UUID);
+//                // 向服务端发送连接
+//                clientSocket.connect();
+//                // 获取到输出流，向外写数据
+//                os = clientSocket.getOutputStream();
+//
+//            }
+//            // 判断是否拿到输出流
+//            if (os != null) {
+//                // 需要发送的信息
+//                String text = "成功发送信息";
+//                // 以utf-8的格式发送出去
+//                os.write(text.getBytes("UTF-8"));
+//            }
+//            // 吐司一下，告诉用户发送成功
+//            Toast.makeText(this, "发送信息成功，请查收", Toast.LENGTH_SHORT).show();
+//        } catch (IOException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//            // 如果发生异常则告诉用户发送失败
+//            Toast.makeText(this, "发送信息失败", Toast.LENGTH_SHORT).show();
+//        }
+
+    }
+
+    // 创建handler，因为我们接收是采用线程来接收的，在线程中无法操作UI，所以需要handler
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            // TODO Auto-generated method stub
+            super.handleMessage(msg);
+            // 通过msg传递过来的信息，吐司一下收到的信息
+            Toast.makeText(Main2Activity.this, (String) msg.obj, Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.button_5:
+                Send();
+                break;
+        }
+    }
+
+    private boolean Send() {
         // 这里需要try catch一下，以防异常抛出
         try {
             // 判断客户端接口是否为空
@@ -175,23 +230,10 @@ public class Main2Activity extends AppCompatActivity implements AdapterView.OnIt
             e.printStackTrace();
             // 如果发生异常则告诉用户发送失败
             Toast.makeText(this, "发送信息失败", Toast.LENGTH_SHORT).show();
+            return false;
         }
-
+        return true;
     }
-
-
-
-    // 创建handler，因为我们接收是采用线程来接收的，在线程中无法操作UI，所以需要handler
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            // TODO Auto-generated method stub
-            super.handleMessage(msg);
-            // 通过msg传递过来的信息，吐司一下收到的信息
-            Toast.makeText(Main2Activity.this, (String) msg.obj, Toast.LENGTH_SHORT).show();
-        }
-    };
-
 
     // 服务端接收信息线程
     private class AcceptThread extends Thread {
